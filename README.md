@@ -11,7 +11,7 @@ Windows 11 Enterprise
 Clone the Detectron2 from, https://github.com/conansherry/detectron2
  
 Install all the build VS 2022 desktop C++ build tools, also install the community edition
-![alt text](VS Build Tools-2019.png)
+![alt text](./VS Build Tools-2019.png)
 
 Python 3.7.0
 pip install torch==1.5.0+cpu torchvision==0.6.0+cpu -f https://download.pytorch.org/whl/torch_stable.html
@@ -30,4 +30,4 @@ python setup.py build develop
 
 ## Make sure all the software, libraries are fully 64-bit (x64) #
 
-![alt text](Installation in X64 NT cmd.png)
+![alt text](./Installation in X64 NT cmd.png)
