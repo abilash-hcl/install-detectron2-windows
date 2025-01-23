@@ -9,8 +9,8 @@ https://github.com/facebookresearch/detectron2
 Windows 11 Enterprise
 64-bit operating system, x64-based processor
 
-### Make sure all the software, libraries are fully 64-bit (x64) #
-### Make sure the path to the installation directory for the detectron doesn't contain any spaces (like, "/One Drive/" etc.) #
+#### Make sure all the software, libraries are fully 64-bit (x64) #
+#### Make sure the path to the installation directory for the detectron doesn't contain any spaces (like, "/One Drive/" etc.) #
 
 ### Following are the Software, Library details
 
@@ -25,7 +25,26 @@ Clone the Detectron2 from, https://github.com/conansherry/detectron2
 - Install Python 3.7.0 -  create a new environment
   
 - pip install torch==1.5.0+cpu torchvision==0.6.0+cpu -f https://download.pytorch.org/whl/torch_stable.html
- 
+
+After the Torch is installed, make the changes in some of the package modules (refer https://github.com/conansherry/detectron2), 
+
+<p align="center" color = "gray", font-style =  "italic"> 
+ file1: 
+  {your evn path}\Lib\site-packages\torch\include\torch\csrc\jit\argument_spec.h
+  example:
+  {C:\Miniconda3\envs\py36}\Lib\site-packages\torch\include\torch\csrc\jit\argument_spec.h(190)
+    static constexpr size_t DEPTH_LIMIT = 128;
+      change to -->
+    static const size_t DEPTH_LIMIT = 128;
+file2: 
+  {your evn path}\Lib\site-packages\torch\include\pybind11\cast.h
+  example:
+  {C:\Miniconda3\envs\py36}\Lib\site-packages\torch\include\pybind11\cast.h(1449)
+    explicit operator type&() { return *(this->value); }
+      change to -->
+    explicit operator type&() { return *((type*)this->value); }
+ </p>
+
 - pip install git+https://github.com/facebookresearch/fvcore
 - pip install cython
 - pip install git+https://github.com/philferriere/cocoapi.git#subdirectory=PythonAPI 
