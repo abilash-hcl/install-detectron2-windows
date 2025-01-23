@@ -28,10 +28,8 @@ Clone the Detectron2 from, https://github.com/conansherry/detectron2
 
 After the Torch is installed, make the changes in some of the package modules (refer https://github.com/conansherry/detectron2), 
 
-<p> 
- file1: 
-</p>
- <p style="color: gray; text-align: center; font-style =  italic; text-indent: 50px;"> 
+File1: 
+<p style="color: gray; text-align: center; font-style =  italic; text-indent: 50;"> 
   {your evn path}\Lib\site-packages\torch\include\torch\csrc\jit\argument_spec.h
   example:
   {C:\Miniconda3\envs\py36}\Lib\site-packages\torch\include\torch\csrc\jit\argument_spec.h(190)
@@ -39,10 +37,9 @@ After the Torch is installed, make the changes in some of the package modules (r
       change to -->
     static const size_t DEPTH_LIMIT = 128;
  </p>
- <p>
-file2: 
- </p>
- <p style="color: gray; text-align: center; font-style =  italic; text-indent: 50px;"> 
+
+File2: 
+ <p style="color: gray; text-align: center; font-style =  italic; text-indent: 50;"> 
   {your evn path}\Lib\site-packages\torch\include\pybind11\cast.h
   example:
   {C:\Miniconda3\envs\py36}\Lib\site-packages\torch\include\pybind11\cast.h(1449)
