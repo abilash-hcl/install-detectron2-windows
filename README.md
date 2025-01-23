@@ -9,6 +9,9 @@ https://github.com/facebookresearch/detectron2
 Windows 11 Enterprise
 64-bit operating system, x64-based processor
 
+### Make sure all the software, libraries are fully 64-bit (x64) #
+### Make sure the path to the installation directory for the detectron doesn't contain any spaces (like, "/One Drive/" etc.) #
+
 ### Following are the Software, Library details
 
 Clone the Detectron2 from, https://github.com/conansherry/detectron2
@@ -35,6 +38,7 @@ Then, open the X64 Native tools command prompt,  load the python environment, go
 
 
 ### Make sure all the software, libraries are fully 64-bit (x64) #
+### Make sure the path to the installation directory for the detectron doesn't contain any spaces (like, "/One Drive/" etc.) #
 
 
 <p align="center">
