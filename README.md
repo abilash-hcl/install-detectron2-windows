@@ -36,9 +36,7 @@ Clone the Detectron2 from, https://github.com/conansherry/detectron2
 Then, open the X64 Native tools command prompt,  load the python environment, go to the detectron repo and run  
 - python setup.py build develop
 
-
-### Make sure all the software, libraries are fully 64-bit (x64) #
-### Make sure the path to the installation directory for the detectron doesn't contain any spaces (like, "/One Drive/" etc.) #
+### Thanks #
 
 
 <p align="center">
