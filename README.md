@@ -22,7 +22,7 @@ Clone the Detectron2 from, https://github.com/conansherry/detectron2
 </p>
 
 
-- Install Python 3.7.0 -  create a new environment
+- Install Python 3.7.0 (https://www.python.org/downloads/release/python-370/) -  create a new environment
   
 - pip install torch==1.5.0+cpu torchvision==0.6.0+cpu -f https://download.pytorch.org/whl/torch_stable.html
 
