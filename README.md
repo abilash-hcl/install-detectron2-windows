@@ -57,6 +57,7 @@ File2:
  
 Then, open the X64 Native tools command prompt,  load the python environment, go to the detectron repo and run  
 - python setup.py build develop
+  If there is issue in python version comaptibility, then chose the ones from the requirements.txt
 
 ### Thanks #
 
