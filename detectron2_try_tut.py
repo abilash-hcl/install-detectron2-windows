@@ -9,7 +9,19 @@ https://colab.research.google.com/drive/16jcaJoc6bCFAQ96jDe2HwtXj7BMD_-m5
 
 Has basics usage of detectron2, including the following:
 """
+import os
+import sys
+sys.path.append(os.getcwd())
+sys.path.append(os.path.dirname(os.path.dirname(os.getcwd())))
+import traceback
 
+try:
+    import torch
+except Exception as e:
+    print("exception...", str(e))
+    traceback.print_exc()
+    print('')
+    
 
 import torch, detectron2
 TORCH_VERSION = ".".join(torch.__version__.split(".")[:2])
@@ -18,7 +30,7 @@ print("torch: ", TORCH_VERSION, "; cuda: ", CUDA_VERSION)
 print("detectron2:", detectron2.__version__)
 
 import numpy as np
-import os, json, cv2, random
+import json, cv2, random
 from cv2 import imshow
 
 from detectron2 import model_zoo
@@ -36,21 +48,34 @@ from detectron2.utils.visualizer import ColorMode
 from detectron2.evaluation import COCOEvaluator, inference_on_dataset
 from detectron2.data import build_detection_test_loader
 
+from tools.utils import get_project_dir
+from tqdm import tqdm
+import traceback
+
 # from google.colab.patches import imshow
 # cv2.waitKey(0)
 
 # # closing all open windows
 # cv2.destroyAllWindows()
 
+proj_dir = get_project_dir()
 
-"""Then, we create a detectron2 config and a detectron2 `DefaultPredictor` to run inference on this image."""
+if torch.cuda.is_available():
+    device = torch.device("cuda")
+    device_type = "gpu"
+else:
+    device = torch.device("cpu")
+    device_type = "cpu"
 
-cfg = get_cfg()
-# add project-specific config (e.g., TensorMask) here if you're not running a model in detectron2's core library
-cfg.merge_from_file(model_zoo.get_config_file("COCO-InstanceSegmentation/mask_rcnn_R_50_FPN_3x.yaml"))
-cfg.MODEL.ROI_HEADS.SCORE_THRESH_TEST = 0.5  # set threshold for this model
-# Find a model from detectron2's model zoo. You can use the https://dl.fbaipublicfiles... url as well
-cfg.MODEL.WEIGHTS = model_zoo.get_checkpoint_url("COCO-InstanceSegmentation/mask_rcnn_R_50_FPN_3x.yaml")
+
+# """Then, we create a detectron2 config and a detectron2 `DefaultPredictor` to run inference on this image."""
+
+# # cfg = get_cfg()
+# # # add project-specific config (e.g., TensorMask) here if you're not running a model in detectron2's core library
+# # cfg.merge_from_file(model_zoo.get_config_file("COCO-InstanceSegmentation/mask_rcnn_R_50_FPN_3x.yaml"))
+# # cfg.MODEL.ROI_HEADS.SCORE_THRESH_TEST = 0.5  # set threshold for this model
+# # # Find a model from detectron2's model zoo. You can use the https://dl.fbaipublicfiles... url as well
+# # cfg.MODEL.WEIGHTS = model_zoo.get_checkpoint_url("COCO-InstanceSegmentation/mask_rcnn_R_50_FPN_3x.yaml")
 
 
 def visualize_output_in_d2(image, cfg, outputs, scale = 1.2):
@@ -63,9 +88,10 @@ def visualize_output_in_d2(image, cfg, outputs, scale = 1.2):
         scale (float, optional): _description_. Defaults to 1.2.
     """  
     # We can use `Visualizer` to draw the predictions on the image.
-    v = Visualizer(image[:, :, ::-1], MetadataCatalog.get(cfg.DATASETS.TRAIN[0]), scale=1.2)
+    v = Visualizer(image[:, :, ::-1], MetadataCatalog.get(cfg.DATASETS.TRAIN[0]), scale=scale)
     out = v.draw_instance_predictions(outputs["instances"].to("cpu"))
-    imshow(out.get_image()[:, :, ::-1])
+    imshow('', out.get_image()[:, :, ::-1])
+    cv2.waitKey(1)
 
 ################################################
 
@@ -140,6 +166,7 @@ def d2_config_for_basemodel(model_yaml="COCO-InstanceSegmentation/mask_rcnn_R_50
     cfg = get_cfg()
     cfg.merge_from_file(model_zoo.get_config_file(model_yaml))
     cfg.MODEL.WEIGHTS = model_zoo.get_checkpoint_url(model_yaml)  # Let training initialize from model zoo
+    cfg.MODEL.DEVICE = device_type
     return cfg
 
 def update_d2_config_for_training(model_config, train_ds_name, num_classes = 1, num_workers = 2, imgs_per_batch = 2, base_lr = 0.00025, max_iter = 300, roi_batch_per_img = 128, output_dir="TRY_D2\outputs"):
@@ -196,7 +223,7 @@ def train_configured_model(model_config, resume=False):
 def update_model_config_for_inference(model_config, trained_mode_path = r"balloon_data\model_final.pth", score_threshold_inf = 0.7):
     # Inference should use the config with parameters that are used in training
     # cfg now already contains everything we've set previously. We changed it a little bit for inference:
-    model_config.MODEL.WEIGHTS = os.path.join(cfg.OUTPUT_DIR, trained_mode_path)  # path to the model we just trained
+    model_config.MODEL.WEIGHTS = os.path.join(model_config.OUTPUT_DIR, trained_mode_path)  # path to the model we just trained
     model_config.MODEL.ROI_HEADS.SCORE_THRESH_TEST = score_threshold_inf   # set a custom testing threshold
     
     return model_config
@@ -213,7 +240,7 @@ def validate_and_visualize_detections(predictor, metadata, val_data_path = r"TRY
     """Then, we randomly select several samples to visualize the prediction results."""
 
     dataset_dicts = get_balloon_dicts(val_data_path)
-    for d in random.sample(dataset_dicts, sample_size):
+    for d in tqdm(random.sample(dataset_dicts, sample_size)):
         im = cv2.imread(d["file_name"])
         outputs = predictor(im)  # format is documented at https://detectron2.readthedocs.io/tutorials/models.html#model-output-format
         v = Visualizer(im[:, :, ::-1],
@@ -222,7 +249,8 @@ def validate_and_visualize_detections(predictor, metadata, val_data_path = r"TRY
                     instance_mode=ColorMode.IMAGE_BW   # remove the colors of unsegmented pixels. This option is only available for segmentation models
         )
         out = v.draw_instance_predictions(outputs["instances"].to("cpu"))
-        imshow(out.get_image()[:, :, ::-1])
+        imshow('', out.get_image()[:, :, ::-1])
+        cv2.waitKey(1)
 
 
 ########################################################################
@@ -264,7 +292,8 @@ def infer_detection_model_in_d2(image_path = r"TRY_D2\input.jpg", model_yaml="CO
     model_yaml="COCO-InstanceSegmentation/mask_rcnn_R_50_FPN_3x.yaml"    
     model_config = d2_config_for_basemodel(model_yaml=model_yaml)    
     try_im = cv2.imread(image_path)
-    imshow(try_im)    
+    imshow("", try_im)  
+    cv2.waitKey(1)  
     predictor = DefaultPredictor(model_config)
     outputs = predictor(try_im)    
     # look at the outputs. See https://detectron2.readthedocs.io/tutorials/models.html#model-output-format for specification
@@ -273,10 +302,10 @@ def infer_detection_model_in_d2(image_path = r"TRY_D2\input.jpg", model_yaml="CO
     print(outputs["instances"].pred_boxes)        
     visualize_output_in_d2(try_im, model_config, outputs)
     
-      
 
-if __name__ == "__main__":
-    
+def run_detectron_tut():
+    """This method runs the tutorial, step-by-step
+    """    
     #############################################################
     
     """# Run a pre-trained detectron2 model on a image from the COCO dataset:
@@ -284,18 +313,19 @@ if __name__ == "__main__":
     # wget http://images.cocodataset.org/val2017/000000439715.jpg -O C:\Users\abilash.ananthula\HCLERS\detectron2-master-ext\TRY_D2\input.jpg
     
     # USE Instance Segmentation mask_rcnn_R_50_FPN_3x
-    model_yaml="COCO-InstanceSegmentation/mask_rcnn_R_50_FPN_3x.yaml"    
-    infer_detection_model_in_d2(image_path = r"TRY_D2\input.jpg", model_yaml=model_yaml) 
+    model_yaml="COCO-InstanceSegmentation/mask_rcnn_R_50_FPN_3x.yaml" 
+    # image_path = r"TRY_D2\input.jpg"   
+    image_path = os.path.join(proj_dir, "TRY_D2", "input.jpg")
+    infer_detection_model_in_d2(image_path = image_path, model_yaml=model_yaml) 
     
     # USE keypoint detection model for Inference 
     model_yaml="COCO-Keypoints/keypoint_rcnn_R_50_FPN_3x.yaml"    
-    infer_detection_model_in_d2(image_path = r"TRY_D2\input.jpg", model_yaml=model_yaml)
+    infer_detection_model_in_d2(image_path = image_path, model_yaml=model_yaml)
     
     # USE Panoptic segmentation model
     model_yaml="COCO-PanopticSegmentation/panoptic_fpn_R_101_3x.yaml"    
-    infer_detection_model_in_d2(image_path = r"TRY_D2\input.jpg", model_yaml=model_yaml)
-    
-        
+    infer_detection_model_in_d2(image_path = image_path, model_yaml=model_yaml)
+            
     
     #############################################################
     
@@ -315,7 +345,9 @@ if __name__ == "__main__":
     ## Prepare the dataset
     Here, the dataset is in its custom format, therefore we write a function to parse it and prepare it into detectron2's standard format. User should write such a function when using a dataset in custom format. See the tutorial for more details.
     """
-    dataset_path = r"TRY_D2\datasets\balloon_dataset\balloon"
+    # dataset_path = r"TRY_D2\datasets\balloon_dataset\balloon"
+    dataset_path = os.path.join("TRY_D2", "datasets", "balloon_dataset", "balloon")
+    
     #Register the dataset
     register_custom_dataset_in_d2(data_splits = ["train", "val"], dataset_prefix = "balloon_", dataset_path = dataset_path, data_classes = ["balloon"])
         
@@ -330,7 +362,8 @@ if __name__ == "__main__":
         img = cv2.imread(d["file_name"])
         visualizer = Visualizer(img[:, :, ::-1], metadata=balloon_metadata, scale=0.5)
         out = visualizer.draw_dataset_dict(d)
-        imshow(out.get_image()[:, :, ::-1])    
+        imshow("", out.get_image()[:, :, ::-1])   
+        cv2.waitKey(1) 
     
     #############################################################
     
@@ -338,7 +371,7 @@ if __name__ == "__main__":
     Now, let's fine-tune a COCO-pretrained R50-FPN Mask R-CNN model on the balloon dataset. It takes ~2 minutes to train 300 iterations on a P100 GPU.
     """
     model_yaml="COCO-InstanceSegmentation/mask_rcnn_R_50_FPN_3x.yaml"
-    
+    output_dir=os.path.join(proj_dir, "TRY_D2", "outputs")
     
     #Configue the model for training
     model_config = d2_config_for_basemodel(model_yaml=model_yaml)
@@ -360,8 +393,38 @@ if __name__ == "__main__":
     
     """We can also evaluate its performance using AP metric implemented in COCO API.
     """
-    get_coco_validation_results(predictor, dataset_name="balloon_val", output_dir="TRY_D2\outputs")
+    get_coco_validation_results(predictor, dataset_name="balloon_val", output_dir=output_dir)
     
+    print("COMPLETED...!")
     
+
+if __name__ == "__main__":
     
+    try:
+        run_detectron_tut()
+        print("Training introduction completed.....")
+    except Exception as e:        
+        try:
+            exc_info = sys.exc_info()
+
+            # do you usefull stuff here
+            # (potentially raising an exception)
+            # try:
+            #     raise TypeError("Again !?!")
+            # except:
+            #     pass
+            # end of useful stuff
+        finally:
+            print("Exception in the tutorial...:\n", str(e))
+            print("\n")
+            traceback.print_exc()
+            # print(traceback.format_exc())
+            
+            # Display the *original* exception
+            traceback.print_exception(*exc_info)
+            del exc_info
+            print("....")
+        
+        
+
     
