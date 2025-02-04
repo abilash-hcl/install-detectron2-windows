@@ -24,7 +24,8 @@ Clone the Detectron2 from, https://github.com/conansherry/detectron2
 
 - Install Python 3.7.0 (https://www.python.org/downloads/release/python-370/) -  create a new environment
   
-- pip install torch==1.5.0+cpu torchvision==0.6.0+cpu -f https://download.pytorch.org/whl/torch_stable.html
+- pip install torch==1.5.0+cu101 torchvision==0.6.0+cu101 -f https://download.pytorch.org/whl/torch_stable.html
+(remove the 'env\\lib\\site-packages\\torch\\lib\\caffe2_nvrtc.dll' file if the system doesn't have the Nvidia GPU)
 
 After the Torch is installed, make the changes in some of the package modules (refer https://github.com/conansherry/detectron2), 
 
